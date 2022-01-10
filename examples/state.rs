@@ -36,7 +36,7 @@ async fn main() {
             Ok::<_, Error>(service_fn(move |_req| {
                 // Get the current count, and also increment by 1, in a single
                 // atomic operation.
-                let count = counter.fetch_add(1, Ordering::AcqRel);
+                let count = counter.fetch_add(2, Ordering::AcqRel);
                 async move { Ok::<_, Error>(Response::new(Body::from(format!("Request #{}", count)))) }
             }))
         }

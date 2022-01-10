@@ -9,6 +9,9 @@ use hyper::{header, Body, Client, Method, Request, Response, Server, StatusCode}
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
 
+let good_result: Result<i32, i32> = Ok(10);
+let bad_result: Result<i32, i32> = Err(10);
+
 static INDEX: &[u8] = b"<a href=\"test.html\">test.html</a>";
 static INTERNAL_SERVER_ERROR: &[u8] = b"Internal Server Error";
 static NOTFOUND: &[u8] = b"Not Found";
@@ -54,6 +57,25 @@ async fn api_post_response(req: Request<Body>) -> Result<Response<Body>> {
     Ok(response)
 }
 
+async fn request_demo() -> Result<Response<Body>> {
+    let data = vec!["foo", "bar", "special"];
+
+    // response
+    let res = match serde_json::to_string(&data) {
+        Ok(json) => Response::builder()
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(json))
+            .unwrap(),
+        Err(_) => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(INTERNAL_SERVER_ERROR.into())
+            .unwrap(),
+    };
+    Ok(res)
+    // Ok(Response::new(Body::from("Hello, World!")))
+}
+
+
 async fn api_get_response() -> Result<Response<Body>> {
     let data = vec!["foo", "bar"];
     let res = match serde_json::to_string(&data) {
@@ -78,6 +100,7 @@ async fn response_examples(
         (&Method::GET, "/test.html") => client_request_response(&client).await,
         (&Method::POST, "/json_api") => api_post_response(req).await,
         (&Method::GET, "/json_api") => api_get_response().await,
+        (&Method::GET, "/request") => api_get_response().await?,
         _ => {
             // Return 404 not found response.
             Ok(Response::builder()
